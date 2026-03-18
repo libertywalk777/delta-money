@@ -1,26 +1,63 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 
+type Tier = 'hero-a' | 'hero-b' | 'mid' | 'dust';
+
 type DollarSpec = {
   id: number;
   left: string;
   delay: number;
   duration: number;
   size: number;
+  tier: Tier;
 };
 
-function makeDollars(count: number): DollarSpec[] {
-  return Array.from({ length: count }, (_, i) => {
-    const seed = i * 7919;
-    return {
-      id: i,
-      left: `${6 + (seed % 88)}%`,
-      delay: (seed % 45) / 10,
-      duration: 2.6 + (seed % 28) / 10,
-      size: 15 + (seed % 20),
-    };
-  });
+function makeDollars(): DollarSpec[] {
+  const out: DollarSpec[] = [];
+  let id = 0;
+
+  for (let i = 0; i < 11; i++) {
+    const s = i * 9341;
+    out.push({
+      id: id++,
+      left: `${4 + (s % 92)}%`,
+      delay: (s % 50) / 11,
+      duration: 5.2 + (s % 35) / 10,
+      size: 46 + (s % 28),
+      tier: i % 2 === 0 ? 'hero-a' : 'hero-b',
+    });
+  }
+  for (let i = 0; i < 16; i++) {
+    const s = i * 6203;
+    out.push({
+      id: id++,
+      left: `${3 + (s % 94)}%`,
+      delay: (s % 40) / 9,
+      duration: 3.4 + (s % 22) / 10,
+      size: 26 + (s % 18),
+      tier: 'mid',
+    });
+  }
+  for (let i = 0; i < 26; i++) {
+    const s = i * 4441;
+    out.push({
+      id: id++,
+      left: `${2 + (s % 96)}%`,
+      delay: (s % 35) / 8,
+      duration: 2.3 + (s % 18) / 10,
+      size: 13 + (s % 14),
+      tier: 'dust',
+    });
+  }
+  return out;
 }
+
+const wrapClass: Record<Tier, string> = {
+  'hero-a': 'splash-dollar-wrap splash-dollar-wrap--hero-a',
+  'hero-b': 'splash-dollar-wrap splash-dollar-wrap--hero-b',
+  mid: 'splash-dollar-wrap splash-dollar-wrap--mid',
+  dust: 'splash-dollar-wrap splash-dollar-wrap--dust',
+};
 
 type Props = {
   loadComplete: boolean;
@@ -28,7 +65,7 @@ type Props = {
 };
 
 export function SplashScreen({ loadComplete, onFinished }: Props) {
-  const dollars = useMemo(() => makeDollars(32), []);
+  const dollars = useMemo(() => makeDollars(), []);
   const [progress, setProgress] = useState(0);
   const [exiting, setExiting] = useState(false);
   const finishedRef = useRef(false);
@@ -57,49 +94,74 @@ export function SplashScreen({ loadComplete, onFinished }: Props) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[600] flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#0f2847] via-[#0c2139] to-[#081828]"
+      className="fixed inset-0 z-[600] flex flex-col items-center justify-center overflow-hidden bg-[#fafafa]"
       initial={{ opacity: 1 }}
       animate={{ opacity: exiting ? 0 : 1 }}
       transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
     >
+      {/* Мягкое свечение по центру */}
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_45%,rgba(0,122,255,0.06)_0%,transparent_65%)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_100%_80%_at_50%_100%,rgba(212,175,55,0.04)_0%,transparent_55%)]"
+        aria-hidden
+      />
+
       <div
         className="pointer-events-none absolute inset-0 overflow-hidden"
         aria-hidden
       >
         {dollars.map((d) => (
-          <span
+          <div
             key={d.id}
-            className="splash-dollar absolute font-semibold text-[#6bb6ff]/[0.24]"
+            className={wrapClass[d.tier]}
             style={{
               left: d.left,
-              top: '-10vh',
-              fontSize: d.size,
+              top: '-14vh',
               animationDelay: `${d.delay}s`,
               animationDuration: `${d.duration}s`,
             }}
           >
-            $
-          </span>
+            <span
+              className={
+                d.tier === 'dust'
+                  ? 'splash-dollar-dust-inner'
+                  : d.tier === 'mid'
+                    ? 'splash-dollar-gold splash-dollar-gold--soft'
+                    : 'splash-dollar-gold'
+              }
+              style={{ fontSize: d.size }}
+            >
+              $
+            </span>
+          </div>
         ))}
       </div>
 
-      <div className="relative z-10 flex w-full max-w-xs flex-col items-center px-8">
+      <div className="relative z-10 flex w-full max-w-sm flex-col items-center px-8">
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
+          initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="text-center"
         >
-          <h1 className="text-[2rem] font-bold tracking-tight text-white sm:text-[2.25rem]">
-            Delta Money
+          <h1 className="text-[2rem] font-bold tracking-tight text-gray-900 sm:text-[2.35rem]">
+            <span className="text-gray-800">Delta </span>
+            <span className="bg-gradient-to-r from-[#007AFF] via-[#2b8cff] to-[#0056b3] bg-clip-text text-transparent">
+              Money
+            </span>
           </h1>
-          <p className="mt-2 text-sm text-blue-200/50">Загружаем ваши данные</p>
+          <p className="mt-2.5 text-sm font-medium tracking-wide text-gray-400">
+            Загружаем ваши данные
+          </p>
         </motion.div>
 
-        <div className="mt-14 w-full max-w-[240px]">
-          <div className="h-[5px] overflow-hidden rounded-full bg-white/[0.07] ring-1 ring-white/[0.08]">
+        <div className="mt-16 w-full max-w-[260px]">
+          <div className="h-1.5 overflow-hidden rounded-full bg-gray-200/90 shadow-inner">
             <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-[#2563eb] via-[#3b82f6] to-[#7dd3fc]"
+              className="h-full rounded-full bg-gradient-to-r from-[#007AFF] via-[#3b9aff] to-[#5eb0ff]"
               initial={{ width: '0%' }}
               animate={{ width: `${Math.min(100, progress)}%` }}
               transition={{
