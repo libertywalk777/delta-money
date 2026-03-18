@@ -1,11 +1,5 @@
-import { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  animate,
-  type PanInfo,
-} from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, 
   Landmark, 
@@ -29,187 +23,6 @@ type Tab = 'stocks' | 'deposits' | 'history';
 
 type TxPrefill = { asset: Asset; operation: 'buy' | 'sell' };
 
-function SwipeStockRow({
-  asset,
-  displayCurrency,
-  currencyRates,
-  swipeOpen,
-  onSwipeOpen,
-  onSwipeClose,
-  onEdit,
-  onBuy,
-  onSell,
-}: {
-  asset: Asset;
-  displayCurrency: string;
-  currencyRates: Record<string, number>;
-  swipeOpen: boolean;
-  onSwipeOpen: () => void;
-  onSwipeClose: () => void;
-  onEdit: () => void;
-  onBuy: () => void;
-  onSell: () => void;
-}) {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [maxDrag, setMaxDrag] = useState(0);
-  const x = useMotionValue(0);
-  const dragMoved = useRef(false);
-
-  useLayoutEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const update = () => {
-      const w = el.offsetWidth;
-      setMaxDrag(Math.max(w * 0.3, 88));
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!swipeOpen && x.get() < -4) {
-      animate(x, 0, { type: 'spring', stiffness: 420, damping: 38 });
-    }
-  }, [swipeOpen, x]);
-
-  const profit = calculateAssetProfit(asset);
-  const value =
-    (asset.quantity || 0) * (asset.currentPrice || asset.buyPrice || 0);
-  const valueConverted = convertCurrency(
-    value,
-    asset.currency,
-    displayCurrency,
-    currencyRates
-  );
-
-  const closeSwipe = () => {
-    animate(x, 0, { type: 'spring', stiffness: 420, damping: 38 });
-    onSwipeClose();
-  };
-
-  const handleDragEnd = (_: unknown, info: PanInfo) => {
-    const openX = -maxDrag;
-    if (maxDrag <= 0) return;
-    const threshold = openX * 0.38;
-    if (info.offset.x < threshold || info.velocity.x < -160) {
-      animate(x, openX, { type: 'spring', stiffness: 380, damping: 34 });
-      onSwipeOpen();
-    } else {
-      animate(x, 0, { type: 'spring', stiffness: 380, damping: 34 });
-      onSwipeClose();
-    }
-  };
-
-  return (
-    <div
-      ref={wrapRef}
-      className="relative overflow-hidden rounded-xl bg-[#E8E8ED]"
-    >
-      <div
-        className="absolute inset-y-0 right-0 z-0 flex w-[31%] min-w-[5.75rem] flex-col justify-center gap-2 pr-1.5"
-        aria-hidden
-      >
-        <button
-          type="button"
-          className="swipe-action-btn swipe-action-btn--buy"
-          onClick={(e) => {
-            e.stopPropagation();
-            closeSwipe();
-            onBuy();
-          }}
-        >
-          <span className="swipe-action-btn__icon">
-            <ArrowDownRight size={17} strokeWidth={2.25} />
-          </span>
-          <span className="swipe-action-btn__label">Купить</span>
-        </button>
-        <button
-          type="button"
-          className="swipe-action-btn swipe-action-btn--sell"
-          onClick={(e) => {
-            e.stopPropagation();
-            closeSwipe();
-            onSell();
-          }}
-        >
-          <span className="swipe-action-btn__icon">
-            <ArrowUpRight size={17} strokeWidth={2.25} />
-          </span>
-          <span className="swipe-action-btn__label">Продать</span>
-        </button>
-      </div>
-      <motion.div
-        style={{ x, touchAction: 'pan-y' }}
-        drag="x"
-        dragConstraints={
-          maxDrag > 0 ? { left: -maxDrag, right: 0 } : { left: 0, right: 0 }
-        }
-        dragElastic={{ left: 0.06, right: 0.18 }}
-        onDragStart={() => {
-          dragMoved.current = false;
-        }}
-        onDrag={(_, info) => {
-          if (Math.abs(info.delta.x) > 2) dragMoved.current = true;
-        }}
-        onDragEnd={handleDragEnd}
-        onClick={() => {
-          if (dragMoved.current) {
-            dragMoved.current = false;
-            return;
-          }
-          if (x.get() < -maxDrag * 0.35) {
-            closeSwipe();
-            return;
-          }
-          onEdit();
-        }}
-        className="card relative z-10 cursor-grab shadow-[0_1px_4px_rgba(0,0,0,0.06)] active:cursor-grabbing"
-      >
-        <div className="mb-2 flex items-center justify-between">
-          <div>
-            <div className="font-semibold text-gray-900">
-              {asset.ticker || asset.name}
-            </div>
-            {asset.ticker && (
-              <div className="text-xs text-gray-500">{asset.name}</div>
-            )}
-          </div>
-          <div className="text-right">
-            <div className="font-semibold text-gray-900">
-              {formatCurrency(valueConverted, displayCurrency)}
-            </div>
-            <div
-              className={`text-xs font-medium ${profit.percent >= 0 ? 'text-success' : 'text-danger'}`}
-            >
-              {profit.percent >= 0 ? '+' : ''}
-              {profit.percent.toFixed(2)}%
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>
-            {asset.quantity} шт ×{' '}
-            {formatCurrency(
-              asset.currentPrice || asset.buyPrice || 0,
-              asset.currency
-            )}
-          </span>
-          <span
-            className={
-              profit.amount >= 0 ? 'text-success' : 'text-danger'
-            }
-          >
-            {profit.amount >= 0 ? '+' : ''}
-            {formatCurrency(profit.amount, asset.currency)}
-          </span>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
 export function Portfolio() {
   const { 
     assets, 
@@ -227,9 +40,6 @@ export function Portfolio() {
   const [showAddAsset, setShowAddAsset] = useState(false);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [txPrefill, setTxPrefill] = useState<TxPrefill | null>(null);
-  const [openSwipeAssetId, setOpenSwipeAssetId] = useState<string | null>(
-    null
-  );
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   
   const stocks = assets.filter(a => a.type === 'stock');
@@ -305,30 +115,67 @@ export function Portfolio() {
             </div>
           ) : (
             <div className="space-y-3">
-              {stocks.map((asset) => (
-                <SwipeStockRow
-                  key={asset.id}
-                  asset={asset}
-                  displayCurrency={displayCurrency}
-                  currencyRates={currencyRates}
-                  swipeOpen={openSwipeAssetId === asset.id}
-                  onSwipeOpen={() => setOpenSwipeAssetId(asset.id)}
-                  onSwipeClose={() =>
-                    setOpenSwipeAssetId((id) =>
-                      id === asset.id ? null : id
-                    )
-                  }
-                  onEdit={() => setEditingAsset(asset)}
-                  onBuy={() => {
-                    setTxPrefill({ asset, operation: 'buy' });
-                    setShowAddTransaction(true);
-                  }}
-                  onSell={() => {
-                    setTxPrefill({ asset, operation: 'sell' });
-                    setShowAddTransaction(true);
-                  }}
-                />
-              ))}
+              {stocks.map((asset) => {
+                const profit = calculateAssetProfit(asset);
+                const value =
+                  (asset.quantity || 0) *
+                  (asset.currentPrice || asset.buyPrice || 0);
+                const valueConverted = convertCurrency(
+                  value,
+                  asset.currency,
+                  displayCurrency,
+                  currencyRates
+                );
+                return (
+                  <motion.div
+                    key={asset.id}
+                    layout
+                    className="card"
+                    onClick={() => setEditingAsset(asset)}
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-gray-900">
+                          {asset.ticker || asset.name}
+                        </div>
+                        {asset.ticker && (
+                          <div className="text-xs text-gray-500">
+                            {asset.name}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-gray-900">
+                          {formatCurrency(valueConverted, displayCurrency)}
+                        </div>
+                        <div
+                          className={`text-xs font-medium ${profit.percent >= 0 ? 'text-success' : 'text-danger'}`}
+                        >
+                          {profit.percent >= 0 ? '+' : ''}
+                          {profit.percent.toFixed(2)}%
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>
+                        {asset.quantity} шт ×{' '}
+                        {formatCurrency(
+                          asset.currentPrice || asset.buyPrice || 0,
+                          asset.currency
+                        )}
+                      </span>
+                      <span
+                        className={
+                          profit.amount >= 0 ? 'text-success' : 'text-danger'
+                        }
+                      >
+                        {profit.amount >= 0 ? '+' : ''}
+                        {formatCurrency(profit.amount, asset.currency)}
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              })}
               
               <button 
                 className="btn btn-secondary w-full"
@@ -522,6 +369,16 @@ export function Portfolio() {
         onClose={() => setEditingAsset(null)}
         onUpdate={updateAsset}
         onDelete={deleteAsset}
+        onAddOperation={
+          editingAsset?.type === 'stock'
+            ? () => {
+                const a = editingAsset;
+                setEditingAsset(null);
+                setTxPrefill({ asset: a, operation: 'buy' });
+                setShowAddTransaction(true);
+              }
+            : undefined
+        }
       />
 
       {/* Add Transaction Modal */}
@@ -766,12 +623,14 @@ function EditAssetModal({
   asset, 
   onClose, 
   onUpdate,
-  onDelete 
+  onDelete,
+  onAddOperation,
 }: { 
   asset: Asset | null;
   onClose: () => void;
   onUpdate: (id: string, updates: Partial<Asset>) => void;
   onDelete: (id: string) => void;
+  onAddOperation?: () => void;
 }) {
   const [currentPrice, setCurrentPrice] = useState('');
   
@@ -862,6 +721,17 @@ function EditAssetModal({
               <span className="font-medium">{asset.currency}</span>
             </div>
           </div>
+
+          {asset.type === 'stock' && onAddOperation && (
+            <button
+              type="button"
+              onClick={onAddOperation}
+              className="btn btn-secondary btn-pill mb-3 w-full gap-2 border border-gray-200/80 bg-white text-gray-800 shadow-sm"
+            >
+              <Plus size={18} className="text-primary" />
+              Добавить операцию
+            </button>
+          )}
           
           <button
             onClick={handleDelete}
