@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   TrendingUp, 
@@ -11,7 +10,6 @@ import {
 } from 'lucide-react';
 import { useStore } from '../store';
 import { TelegramProfileCard } from './TelegramProfileCard';
-import { PhoneShareModal, wasPhoneModalPostponed } from './PhoneShareModal';
 import { 
   formatCurrency, 
   calculateTotalPortfolioValue, 
@@ -22,25 +20,7 @@ import {
 
 export function Dashboard() {
   const { assets, transactions, goals, displayCurrency, currencyRates } = useStore();
-  const useCloud = useStore((s) => s.useCloud);
-  const phone = useStore((s) => s.phone);
-  const cloudOk = useStore((s) => s.cloudBootstrapSuccess);
-  const initError = useStore((s) => s.initError);
-  const phoneShareModalSignal = useStore((s) => s.phoneShareModalSignal);
-  const [phoneModalOpen, setPhoneModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (!useCloud || !cloudOk || initError || phone) return;
-    if (wasPhoneModalPostponed()) return;
-    setPhoneModalOpen(true);
-  }, [useCloud, cloudOk, initError, phone]);
-
-  useEffect(() => {
-    if (phoneShareModalSignal > 0 && useCloud && !phone) {
-      setPhoneModalOpen(true);
-    }
-  }, [phoneShareModalSignal, useCloud, phone]);
-  
   const totalValue = calculateTotalPortfolioValue(assets, currencyRates, displayCurrency);
   const totalInvested = calculateTotalInvested(assets, currencyRates, displayCurrency);
   const totalProfit = totalValue - totalInvested;
@@ -58,7 +38,6 @@ export function Dashboard() {
 
   return (
     <div className="pb-24 px-4 pt-4">
-      <PhoneShareModal open={phoneModalOpen} onClose={() => setPhoneModalOpen(false)} />
       <TelegramProfileCard />
 
       {/* Balance Card */}

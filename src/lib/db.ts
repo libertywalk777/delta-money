@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Asset, Transaction, Goal, CurrencyRates, Currency } from '../types';
-import { signInWithTelegram } from './telegramAuth';
+import { ensureSupabaseMatchesTelegramUser } from './telegramAuth';
 
 const ZERO_UUID = '00000000-0000-0000-0000-000000000000';
 
@@ -64,10 +64,7 @@ export function rowToGoal(r: Record<string, unknown>): Goal {
 }
 
 export async function loadAll(supabase: SupabaseClient) {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) {
-    await signInWithTelegram(supabase);
-  }
+  await ensureSupabaseMatchesTelegramUser(supabase);
 
   const [a, t, g, s] = await Promise.all([
     supabase.from('assets').select('*').order('created_at', { ascending: false }),
@@ -100,10 +97,6 @@ export async function loadAll(supabase: SupabaseClient) {
     RUB: 90,
   };
   const displayCurrency = (settingsRow?.display_currency as Currency) || 'USD';
-  const phone =
-    settingsRow?.phone != null && String(settingsRow.phone).trim() !== ''
-      ? String(settingsRow.phone)
-      : null;
 
   return {
     assets: (a.data ?? []).map((r) => rowToAsset(r as Record<string, unknown>)),
@@ -111,14 +104,7 @@ export async function loadAll(supabase: SupabaseClient) {
     goals: (g.data ?? []).map((r) => rowToGoal(r as Record<string, unknown>)),
     displayCurrency,
     currencyRates,
-    phone,
   };
-}
-
-export async function saveUserPhone(supabase: SupabaseClient, phone: string) {
-  const uid = await getUserId(supabase);
-  const { error } = await supabase.from('user_settings').update({ phone }).eq('user_id', uid);
-  if (error) throw error;
 }
 
 export async function insertAsset(supabase: SupabaseClient, asset: Omit<Asset, 'id' | 'createdAt'>) {
@@ -255,7 +241,6 @@ export async function clearAllUserData(supabase: SupabaseClient) {
     .update({
       display_currency: 'USD',
       currency_rates: { USD: 1, UZS: 12500, EUR: 0.92, RUB: 90 },
-      phone: null,
     })
     .eq('user_id', uid);
   if (error) throw error;

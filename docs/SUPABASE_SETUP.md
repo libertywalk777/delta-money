@@ -10,7 +10,6 @@
 
 1. Весь файл `supabase/migrations/001_init.sql`
 2. Весь файл `supabase/migrations/002_telegram_auth_map.sql`
-3. `supabase/migrations/003_user_settings_phone.sql` (колонка `phone` для номера из мини-аппа)
 
 ## 3. Anonymous выключить
 
@@ -55,11 +54,5 @@ https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://<project-ref>.supabas
 ```
 
 Если задал `TELEGRAM_WEBHOOK_SECRET`, тот же `secret_token` в URL обязателен.
-
-## 7. Номер телефона в приложении
-
-Номер запрашивается через `requestContact` в мини-аппе и сохраняется в `user_settings.phone`. Токен бота для этого **не нужен** в клиенте.
-
----
 
 **Важно:** если токен бота светили в чате/репозитории — в @BotFather сделай **Revoke** и заново положи новый токен только в Supabase Secrets.

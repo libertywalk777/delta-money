@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import { AtSign, Hash, Languages, Smartphone, Crown } from 'lucide-react';
-import { useStore } from '../store';
+import { Crown } from 'lucide-react';
 import {
   useTelegramUser,
   displayTelegramName,
@@ -13,11 +12,13 @@ function initials(user: TelegramUserInfo) {
   return (a + b).toUpperCase() || '?';
 }
 
+function cleanUsername(raw?: string) {
+  if (!raw) return '';
+  return raw.replace(/^@+/, '').trim();
+}
+
 export function TelegramProfileCard() {
   const { user, isInsideTelegram } = useTelegramUser();
-  const phone = useStore((s) => s.phone);
-  const useCloud = useStore((s) => s.useCloud);
-  const requestPhoneShareModal = useStore((s) => s.requestPhoneShareModal);
 
   if (!isInsideTelegram || !user) {
     return (
@@ -34,7 +35,7 @@ export function TelegramProfileCard() {
   }
 
   const name = displayTelegramName(user);
-  const lang = user.language_code?.toUpperCase() ?? '—';
+  const username = cleanUsername(user.username);
 
   return (
     <motion.div
@@ -42,7 +43,7 @@ export function TelegramProfileCard() {
       animate={{ opacity: 1, y: 0 }}
       className="card mb-4 overflow-hidden"
     >
-      <div className="flex gap-4 items-start">
+      <div className="flex gap-4 items-center">
         <div className="relative flex-shrink-0">
           {user.photo_url ? (
             <img
@@ -65,69 +66,20 @@ export function TelegramProfileCard() {
           )}
         </div>
 
-        <div className="flex-1 min-w-0 pt-0.5">
+        <div className="flex-1 min-w-0">
           <h2 className="text-lg font-bold text-gray-900 truncate">{name}</h2>
-          {user.username ? (
+          {username ? (
             <a
-              href={`https://t.me/${user.username}`}
+              href={`https://t.me/${username}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[#007AFF] text-sm font-medium mt-0.5"
+              className="text-[#007AFF] text-sm font-medium mt-0.5 block truncate"
             >
-              <AtSign size={14} className="opacity-80" />@{user.username}
+              @{username}
             </a>
           ) : (
             <p className="text-sm text-gray-400 mt-0.5">Ник не указан</p>
           )}
-        </div>
-      </div>
-
-      <div className="mt-4 pt-4 border-t border-gray-100 space-y-2.5">
-        <div className="flex items-center gap-3 text-sm">
-          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-            <Hash size={15} className="text-gray-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs text-gray-400">Telegram ID</div>
-            <div className="font-mono text-gray-900 tabular-nums">{user.id}</div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 text-sm">
-          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-            <Languages size={15} className="text-gray-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs text-gray-400">Язык интерфейса</div>
-            <div className="text-gray-900">{lang}</div>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3 text-sm">
-          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Smartphone size={15} className="text-gray-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs text-gray-400">Телефон</div>
-            {phone ? (
-              <div className="text-gray-900 font-medium tabular-nums">{phone}</div>
-            ) : useCloud ? (
-              <div className="flex flex-col gap-2">
-                <span className="text-gray-500 text-sm">Не указан</span>
-                <button
-                  type="button"
-                  onClick={() => requestPhoneShareModal()}
-                  className="text-left text-sm font-medium text-[#007AFF] active:opacity-70"
-                >
-                  Указать номер
-                </button>
-              </div>
-            ) : (
-              <div className="text-gray-500 text-sm leading-snug">
-                Укажите в облачной версии приложения
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </motion.div>
