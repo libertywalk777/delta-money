@@ -112,7 +112,8 @@ export function Settings() {
     clearAllData, 
     assets, 
     transactions, 
-    goals 
+    goals,
+    useCloud,
   } = useStore();
   
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
@@ -139,6 +140,14 @@ export function Settings() {
       </div>
 
       <div className="px-4 pt-4">
+        {useCloud && (
+          <SettingsGroup title="Синхронизация">
+            <div className="px-4 py-3 text-sm text-gray-600">
+              Данные сохраняются в Supabase (анонимная сессия на этом устройстве).
+            </div>
+          </SettingsGroup>
+        )}
+
         {/* Основные */}
         <SettingsGroup title="Основные">
           <SettingsItem
