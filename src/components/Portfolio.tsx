@@ -105,35 +105,39 @@ function SwipeStockRow({
   return (
     <div
       ref={wrapRef}
-      className="relative overflow-hidden rounded-xl bg-gray-100/80"
+      className="relative overflow-hidden rounded-xl bg-[#E8E8ED]"
     >
       <div
-        className="absolute inset-y-0 right-0 z-0 flex w-[30%] min-w-[5.5rem]"
+        className="absolute inset-y-0 right-0 z-0 flex w-[31%] min-w-[5.75rem] flex-col justify-center gap-2 pr-1.5"
         aria-hidden
       >
         <button
           type="button"
-          className="flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-l-xl bg-emerald-500 px-1 text-xs font-semibold text-white active:bg-emerald-600"
+          className="swipe-action-btn swipe-action-btn--buy"
           onClick={(e) => {
             e.stopPropagation();
             closeSwipe();
             onBuy();
           }}
         >
-          <ArrowDownRight size={15} strokeWidth={2.25} className="opacity-95" />
-          Купить
+          <span className="swipe-action-btn__icon">
+            <ArrowDownRight size={17} strokeWidth={2.25} />
+          </span>
+          <span className="swipe-action-btn__label">Купить</span>
         </button>
         <button
           type="button"
-          className="flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-r-xl bg-rose-500 px-1 text-xs font-semibold text-white active:bg-rose-600"
+          className="swipe-action-btn swipe-action-btn--sell"
           onClick={(e) => {
             e.stopPropagation();
             closeSwipe();
             onSell();
           }}
         >
-          <ArrowUpRight size={15} strokeWidth={2.25} className="opacity-95" />
-          Продать
+          <span className="swipe-action-btn__icon">
+            <ArrowUpRight size={17} strokeWidth={2.25} />
+          </span>
+          <span className="swipe-action-btn__label">Продать</span>
         </button>
       </div>
       <motion.div
@@ -918,21 +922,66 @@ function AddTransactionModal({
     }
   }, [isOpen, prefillStock]);
 
+  const stockAssets = assets.filter((a) => a.type === 'stock');
+  const depositAssets = assets.filter((a) => a.type === 'deposit');
+
+  useEffect(() => {
+    if (type === 'deposit') {
+      const d = assets.find((a) => a.id === assetId);
+      if (assetId && d?.type !== 'deposit') {
+        setAssetId('');
+        setAssetName('');
+      }
+    }
+    if (type === 'buy' || type === 'sell') {
+      const s = assets.find((a) => a.id === assetId);
+      if (assetId && s?.type !== 'stock') {
+        setAssetId('');
+        setAssetName('');
+      }
+    }
+  }, [type, assetId, assets]);
+
   const handleSubmit = () => {
-    if (!assetName || !amount) return;
-    
+    const qty = parseFloat(amount);
+    if (!qty || qty <= 0) return;
+
+    if (type === 'deposit') {
+      if (!assetId) return;
+      const dep = assets.find((a) => a.id === assetId && a.type === 'deposit');
+      if (!dep) return;
+      onAdd({
+        assetId: dep.id,
+        assetName: dep.name,
+        type: 'deposit',
+        amount: qty,
+        price: 1,
+        currency: dep.currency,
+        date,
+        comment: comment || undefined,
+      });
+      onClose();
+      return;
+    }
+
+    if (type === 'sell') {
+      if (!assetId && !assetName.trim()) return;
+    }
+    if (type === 'buy') {
+      if (!assetId && !assetName.trim()) return;
+    }
+
     onAdd({
       assetId: assetId || undefined,
-      assetName,
+      assetName: assetName.trim() || (assets.find((a) => a.id === assetId)?.name ?? ''),
       type,
-      amount: parseFloat(amount),
+      amount: qty,
       price: price ? parseFloat(price) : undefined,
       currency,
       date,
       comment: comment || undefined,
     });
-    
-    // Reset
+
     setType('buy');
     setAssetId('');
     setAssetName('');
@@ -971,6 +1020,11 @@ function AddTransactionModal({
             </div>
             
             <div className="modal-body">
+              <p className="mb-3 rounded-xl bg-blue-50/90 px-3 py-2.5 text-xs leading-snug text-gray-700">
+                Покупка и продажа <strong>меняют портфель</strong> (вкладка «Акции»), запись
+                одновременно попадает в <strong>«Историю»</strong>. Пополнение увеличивает сумму
+                выбранного вклада.
+              </p>
               <div className="segment-control mb-4">
                 <button
                   className={`segment-btn ${type === 'buy' ? 'active' : ''}`}
@@ -992,66 +1046,120 @@ function AddTransactionModal({
                 </button>
               </div>
 
-              {assets.length > 0 && (
-                <div className="input-group">
-                  <label className="input-label">Выбрать актив</label>
-                  <select
-                    className="select"
-                    value={assetId}
-                    onChange={(e) => {
-                      setAssetId(e.target.value);
-                      const asset = assets.find(a => a.id === e.target.value);
-                      if (asset) {
-                        setAssetName(asset.name);
-                        setCurrency(asset.currency);
-                      }
-                    }}
-                  >
-                    <option value="">Другой актив</option>
-                    {assets.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.ticker || a.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {type === 'deposit' ? (
+                depositAssets.length > 0 ? (
+                  <div className="input-group">
+                    <label className="input-label">Вклад</label>
+                    <select
+                      className="select"
+                      value={assetId}
+                      onChange={(e) => {
+                        setAssetId(e.target.value);
+                        const asset = assets.find((a) => a.id === e.target.value);
+                        if (asset) {
+                          setAssetName(asset.name);
+                          setCurrency(asset.currency);
+                        }
+                      }}
+                    >
+                      <option value="">Выберите вклад</option>
+                      {depositAssets.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <p className="mb-3 text-sm text-amber-800">
+                    Нет вкладов. Добавьте вклад во вкладке «Депозиты», затем пополните его здесь.
+                  </p>
+                )
+              ) : (
+                <>
+                  {stockAssets.length > 0 && (
+                    <div className="input-group">
+                      <label className="input-label">
+                        {type === 'buy'
+                          ? 'Докупить к позиции'
+                          : 'Позиция'}
+                      </label>
+                      <select
+                        className="select"
+                        value={assetId}
+                        onChange={(e) => {
+                          setAssetId(e.target.value);
+                          const asset = assets.find((a) => a.id === e.target.value);
+                          if (asset) {
+                            setAssetName(asset.name);
+                            setCurrency(asset.currency);
+                          }
+                        }}
+                      >
+                        <option value="">
+                          {type === 'buy' ? 'Новый актив (другая монета)' : '— выберите —'}
+                        </option>
+                        {stockAssets.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.ticker || a.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {(type === 'buy' || (type === 'sell' && !assetId)) && (
+                    <div className="input-group">
+                      <label className="input-label">
+                        {type === 'buy' ? 'Название / тикер' : 'Название актива'}
+                      </label>
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="TON, AAPL, Bitcoin…"
+                        value={assetName}
+                        onChange={(e) => setAssetName(e.target.value)}
+                      />
+                    </div>
+                  )}
+                </>
               )}
 
-              {!assetId && (
+              {type === 'deposit' ? (
                 <div className="input-group">
-                  <label className="input-label">Название актива</label>
-                  <input
-                    type="text"
-                    className="input"
-                    placeholder="AAPL, Bitcoin, и т.д."
-                    value={assetName}
-                    onChange={(e) => setAssetName(e.target.value)}
-                  />
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="input-group">
-                  <label className="input-label">Количество</label>
+                  <label className="input-label">Сумма пополнения</label>
                   <input
                     type="number"
                     className="input"
-                    placeholder="10"
+                    placeholder="100000"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                   />
                 </div>
-                <div className="input-group">
-                  <label className="input-label">Цена за единицу</label>
-                  <input
-                    type="number"
-                    className="input"
-                    placeholder="150.00"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                  />
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="input-group">
+                    <label className="input-label">Количество, шт</label>
+                    <input
+                      type="number"
+                      className="input"
+                      placeholder="10"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label className="input-label">Цена за единицу</label>
+                    <input
+                      type="number"
+                      className="input"
+                      placeholder="150.00"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="input-group">

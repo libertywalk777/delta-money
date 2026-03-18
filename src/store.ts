@@ -4,6 +4,67 @@ import WebApp from '@twa-dev/sdk';
 import { Asset, Transaction, Goal, CurrencyRates, Currency } from './types';
 import { isSupabaseConfigured, getSupabase } from './lib/supabase';
 import * as db from './lib/db';
+import { applyTransactionToPortfolio } from './lib/applyTransactionToPortfolio';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+function stripAssetForInsert(a: Asset): Omit<Asset, 'id' | 'createdAt'> {
+  const { id: _i, createdAt: _c, ...rest } = a;
+  return rest;
+}
+
+async function syncPortfolioAfterTransaction(
+  supabase: SupabaseClient,
+  before: Asset[],
+  after: Asset[],
+  tx: Omit<Transaction, 'id'>
+): Promise<{ assets: Asset[]; tx: Transaction }> {
+  const beforeIds = new Set(before.map((a) => a.id));
+  let finalTx = { ...tx };
+  let afterAssets = after.map((a) => ({ ...a }));
+
+  for (let i = 0; i < afterAssets.length; i++) {
+    if (!beforeIds.has(afterAssets[i].id)) {
+      const row = await db.insertAsset(
+        supabase,
+        stripAssetForInsert(afterAssets[i])
+      );
+      const oldId = afterAssets[i].id;
+      afterAssets[i] = row;
+      if (finalTx.assetId === oldId) {
+        finalTx = { ...finalTx, assetId: row.id, assetName: row.name };
+      }
+    }
+  }
+
+  for (const a of afterAssets) {
+    if (!beforeIds.has(a.id)) continue;
+    const old = before.find((x) => x.id === a.id);
+    if (!old) continue;
+    if (
+      old.quantity !== a.quantity ||
+      old.buyPrice !== a.buyPrice ||
+      old.currentPrice !== a.currentPrice ||
+      old.amount !== a.amount
+    ) {
+      await db.updateAssetDb(supabase, a.id, {
+        quantity: a.quantity,
+        buyPrice: a.buyPrice,
+        currentPrice: a.currentPrice,
+        amount: a.amount,
+      });
+    }
+  }
+
+  const txRow = await db.insertTransaction(supabase, finalTx);
+
+  for (const id of beforeIds) {
+    if (!afterAssets.some((a) => a.id === id)) {
+      await db.deleteAssetDb(supabase, id);
+    }
+  }
+
+  return { assets: afterAssets, tx: txRow };
+}
 
 function showSaveError(title: string, e: unknown) {
   const msg =
@@ -97,13 +158,26 @@ function createLocalStore() {
             transactions: state.transactions.filter((t) => t.assetId !== id),
           })),
 
-        addTransaction: (transaction) =>
+        addTransaction: (transaction) => {
+          const result = applyTransactionToPortfolio(
+            get().assets,
+            transaction
+          );
+          if (!result.ok) {
+            showSaveError(
+              'Операция не выполнена',
+              new Error(result.message)
+            );
+            return;
+          }
           set((state) => ({
+            assets: result.nextAssets,
             transactions: [
+              { ...result.transaction, id: generateId() },
               ...state.transactions,
-              { ...transaction, id: generateId() },
             ],
-          })),
+          }));
+        },
 
         deleteTransaction: (id) =>
           set((state) => ({
@@ -237,8 +311,26 @@ function createCloudStore() {
     addTransaction: async (transaction) => {
       try {
         await supabase.auth.refreshSession().catch(() => {});
-        const row = await db.insertTransaction(supabase, transaction);
-        set((s) => ({ transactions: [row, ...s.transactions] }));
+        const before = get().assets;
+        const result = applyTransactionToPortfolio(before, transaction);
+        if (!result.ok) {
+          showSaveError(
+            'Операция не выполнена',
+            new Error(result.message)
+          );
+          return;
+        }
+        const { assets: nextAssets, tx: row } =
+          await syncPortfolioAfterTransaction(
+            supabase,
+            before,
+            result.nextAssets,
+            result.transaction
+          );
+        set((s) => ({
+          assets: nextAssets,
+          transactions: [row, ...s.transactions],
+        }));
       } catch (e) {
         showSaveError('Операция не сохранена', e);
       }
