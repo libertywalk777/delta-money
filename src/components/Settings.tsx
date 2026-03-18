@@ -277,7 +277,7 @@ export function Settings() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.98 }}
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="fixed left-4 right-4 bottom-[7.5rem] max-w-md mx-auto bg-white rounded-2xl shadow-2xl z-[110] max-h-[min(58vh,420px)] overflow-hidden ring-1 ring-black/5"
+              className="fixed left-4 right-4 bottom-[9.5rem] max-w-md mx-auto bg-white rounded-2xl shadow-2xl z-[110] max-h-[min(58vh,420px)] overflow-hidden ring-1 ring-black/5"
             >
               <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Выберите валюту</h2>
@@ -334,7 +334,7 @@ export function Settings() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.98 }}
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="fixed left-4 right-4 bottom-[7.5rem] max-w-md mx-auto bg-white rounded-2xl shadow-2xl z-[110] max-h-[min(70vh,520px)] overflow-hidden flex flex-col ring-1 ring-black/5"
+              className="fixed left-4 right-4 bottom-[9.5rem] max-w-md mx-auto bg-white rounded-2xl shadow-2xl z-[110] max-h-[min(70vh,520px)] overflow-hidden flex flex-col ring-1 ring-black/5"
             >
               <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-lg font-semibold">Курсы валют</h2>
