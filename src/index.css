@@ -253,6 +253,30 @@ body {
   font-weight: 600;
 }
 
+/* Экран загрузки Delta Money */
+@keyframes splash-dollar-fall {
+  0% {
+    transform: translateY(-5vh) rotate(-8deg);
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.5;
+  }
+  92% {
+    opacity: 0.22;
+  }
+  100% {
+    transform: translateY(115vh) rotate(14deg);
+    opacity: 0;
+  }
+}
+
+.splash-dollar {
+  animation-name: splash-dollar-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
 .modal-body {
   padding: 16px;
 }

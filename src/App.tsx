@@ -16,6 +16,7 @@ import { useStore } from './store';
 import { isSupabaseConfigured } from './lib/supabase';
 import { mustOpenInTelegramMobile } from './lib/telegramGate';
 import { OpenInTelegramGate } from './components/OpenInTelegramGate';
+import { SplashScreen } from './components/SplashScreen';
 
 type Tab = 'dashboard' | 'portfolio' | 'goals' | 'analytics' | 'settings';
 
@@ -37,10 +38,27 @@ export default function App() {
   const bootstrap = useStore((s) => s.bootstrap);
 
   const gated = mustOpenInTelegramMobile();
+  const [splashFinished, setSplashFinished] = useState(gated);
+  const [loadComplete, setLoadComplete] = useState(gated);
 
   useEffect(() => {
-    if (gated || !isSupabaseConfigured()) return;
-    void bootstrap();
+    if (gated) return;
+    let cancelled = false;
+    const minMs = 1600;
+    const t0 = Date.now();
+    (async () => {
+      try {
+        if (isSupabaseConfigured()) await bootstrap();
+      } catch {
+        /* показываем приложение даже при ошибке загрузки */
+      }
+      const wait = Math.max(0, minMs - (Date.now() - t0));
+      await new Promise((r) => setTimeout(r, wait));
+      if (!cancelled) setLoadComplete(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [gated, bootstrap]);
 
   useEffect(() => {
@@ -93,6 +111,15 @@ export default function App() {
 
   if (gated) {
     return <OpenInTelegramGate />;
+  }
+
+  if (!splashFinished) {
+    return (
+      <SplashScreen
+        loadComplete={loadComplete}
+        onFinished={() => setSplashFinished(true)}
+      />
+    );
   }
 
   return (
