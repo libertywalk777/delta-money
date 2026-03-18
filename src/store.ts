@@ -14,6 +14,12 @@ interface AppState {
   goals: Goal[];
   displayCurrency: Currency;
   currencyRates: CurrencyRates;
+  /** Телефон из Supabase (после requestContact) */
+  phone: string | null;
+  /** Успешная синхронизация с облаком (для модалки номера) */
+  cloudBootstrapSuccess: boolean;
+  phoneShareModalSignal: number;
+  requestPhoneShareModal: () => void;
 
   bootstrap: () => Promise<void>;
 
@@ -57,6 +63,10 @@ function createLocalStore() {
         goals: [],
         displayCurrency: 'USD',
         currencyRates: { ...defaultRates },
+        phone: null,
+        cloudBootstrapSuccess: false,
+        phoneShareModalSignal: 0,
+        requestPhoneShareModal: () => {},
 
         bootstrap: async () => {},
 
@@ -137,6 +147,7 @@ function createLocalStore() {
             assets: [],
             transactions: [],
             goals: [],
+            phone: null,
           }),
       }),
       {
@@ -166,19 +177,37 @@ function createCloudStore() {
     goals: [],
     displayCurrency: 'USD',
     currencyRates: { ...defaultRates },
+    phone: null,
+    cloudBootstrapSuccess: false,
+    phoneShareModalSignal: 0,
+    requestPhoneShareModal: () => {
+      try {
+        sessionStorage.removeItem('delta_phone_modal_later');
+      } catch {
+        /* */
+      }
+      set((s) => ({ phoneShareModalSignal: s.phoneShareModalSignal + 1 }));
+    },
 
     bootstrap: async () => {
       try {
         const data = await db.loadAll(supabase);
         set({
           ...data,
+          phone: data.phone ?? null,
           initError: null,
           useCloud: true,
+          cloudBootstrapSuccess: true,
         });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         console.warn('[Supabase]', msg);
-        set({ initError: msg, useCloud: true });
+        set({
+          initError: msg,
+          useCloud: true,
+          cloudBootstrapSuccess: false,
+          phone: null,
+        });
       }
     },
 
@@ -307,6 +336,7 @@ function createCloudStore() {
           goals: [],
           displayCurrency: 'USD',
           currencyRates: { ...defaultRates },
+          phone: null,
         });
       } catch (e) {
         console.error(e);

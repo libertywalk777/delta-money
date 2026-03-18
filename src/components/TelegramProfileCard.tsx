@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { AtSign, Hash, Languages, Smartphone, Crown } from 'lucide-react';
+import { useStore } from '../store';
 import {
   useTelegramUser,
   displayTelegramName,
@@ -14,6 +15,9 @@ function initials(user: TelegramUserInfo) {
 
 export function TelegramProfileCard() {
   const { user, isInsideTelegram } = useTelegramUser();
+  const phone = useStore((s) => s.phone);
+  const useCloud = useStore((s) => s.useCloud);
+  const requestPhoneShareModal = useStore((s) => s.requestPhoneShareModal);
 
   if (!isInsideTelegram || !user) {
     return (
@@ -105,10 +109,24 @@ export function TelegramProfileCard() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-xs text-gray-400">Телефон</div>
-            <div className="text-gray-500 text-sm leading-snug">
-              В Mini App Telegram <strong>не передаёт</strong> номер телефона. Его можно
-              запросить у бота отдельно (кнопка «Поделиться контактом»).
-            </div>
+            {phone ? (
+              <div className="text-gray-900 font-medium tabular-nums">{phone}</div>
+            ) : useCloud ? (
+              <div className="flex flex-col gap-2">
+                <span className="text-gray-500 text-sm">Не указан</span>
+                <button
+                  type="button"
+                  onClick={() => requestPhoneShareModal()}
+                  className="text-left text-sm font-medium text-[#007AFF] active:opacity-70"
+                >
+                  Указать номер
+                </button>
+              </div>
+            ) : (
+              <div className="text-gray-500 text-sm leading-snug">
+                Укажите в облачной версии приложения
+              </div>
+            )}
           </div>
         </div>
       </div>
