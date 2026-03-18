@@ -9,6 +9,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useStore } from '../store';
+import { TelegramProfileCard } from './TelegramProfileCard';
 import { 
   formatCurrency, 
   calculateTotalPortfolioValue, 
@@ -37,6 +38,8 @@ export function Dashboard() {
 
   return (
     <div className="pb-24 px-4 pt-4">
+      <TelegramProfileCard />
+
       {/* Balance Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

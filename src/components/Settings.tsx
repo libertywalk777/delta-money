@@ -143,7 +143,7 @@ export function Settings() {
         {useCloud && (
           <SettingsGroup title="Синхронизация">
             <div className="px-4 py-3 text-sm text-gray-600">
-              Данные сохраняются в Supabase (анонимная сессия на этом устройстве).
+              Вход по Telegram: данные привязаны к вашему аккаунту в мини-приложении.
             </div>
           </SettingsGroup>
         )}

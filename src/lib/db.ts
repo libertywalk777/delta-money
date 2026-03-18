@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Asset, Transaction, Goal, CurrencyRates, Currency } from '../types';
+import { signInWithTelegram } from './telegramAuth';
 
 const ZERO_UUID = '00000000-0000-0000-0000-000000000000';
 
@@ -62,15 +63,11 @@ export function rowToGoal(r: Record<string, unknown>): Goal {
   };
 }
 
-export async function authEnsureAnonymous(supabase: SupabaseClient) {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user) return;
-  const { error } = await supabase.auth.signInAnonymously();
-  if (error) throw new Error(error.message);
-}
-
 export async function loadAll(supabase: SupabaseClient) {
-  await authEnsureAnonymous(supabase);
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) {
+    await signInWithTelegram(supabase);
+  }
 
   const [a, t, g, s] = await Promise.all([
     supabase.from('assets').select('*').order('created_at', { ascending: false }),

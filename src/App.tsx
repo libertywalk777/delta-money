@@ -14,6 +14,8 @@ import { Analytics } from './components/Analytics';
 import { Settings as SettingsPage } from './components/Settings';
 import { useStore } from './store';
 import { isSupabaseConfigured } from './lib/supabase';
+import { mustOpenInTelegramMobile } from './lib/telegramGate';
+import { OpenInTelegramGate } from './components/OpenInTelegramGate';
 
 type Tab = 'dashboard' | 'portfolio' | 'goals' | 'analytics' | 'settings';
 
@@ -32,15 +34,14 @@ export default function App() {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const navRef = useRef<HTMLDivElement>(null);
 
-  const initialized = useStore((s) => s.initialized);
-  const initError = useStore((s) => s.initError);
   const bootstrap = useStore((s) => s.bootstrap);
 
+  const gated = mustOpenInTelegramMobile();
+
   useEffect(() => {
-    if (isSupabaseConfigured()) {
-      void bootstrap();
-    }
-  }, [bootstrap]);
+    if (gated || !isSupabaseConfigured()) return;
+    void bootstrap();
+  }, [gated, bootstrap]);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -90,26 +91,12 @@ export default function App() {
     }
   };
 
-  if (isSupabaseConfigured() && !initialized) {
-    return (
-      <div className="min-h-screen bg-[#F2F2F7] flex flex-col items-center justify-center gap-4 px-6">
-        <div className="w-10 h-10 border-2 border-[#007AFF] border-t-transparent rounded-full animate-spin" />
-        <p className="text-gray-600 text-sm text-center">Загрузка данных…</p>
-      </div>
-    );
+  if (gated) {
+    return <OpenInTelegramGate />;
   }
 
   return (
     <div className="min-h-screen bg-[#F2F2F7]">
-      {initError && (
-        <div className="mx-4 mt-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-sm">
-          <strong>Облако:</strong> {initError}
-          <p className="mt-2 text-xs text-amber-800">
-            Выполни SQL из <code className="bg-amber-100 px-1 rounded">supabase/migrations/001_init.sql</code> в Supabase
-            → SQL Editor. Включи <strong>Anonymous</strong> в Authentication → Providers.
-          </p>
-        </div>
-      )}
       {/* Content */}
       <AnimatePresence mode="wait">
         <motion.main

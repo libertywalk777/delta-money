@@ -157,7 +157,7 @@ function createCloudStore() {
   const supabase = getSupabase();
 
   return create<AppState>()((set, get) => ({
-    initialized: false,
+    initialized: true,
     initError: null,
     useCloud: true,
 
@@ -172,17 +172,13 @@ function createCloudStore() {
         const data = await db.loadAll(supabase);
         set({
           ...data,
-          initialized: true,
           initError: null,
           useCloud: true,
         });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        set({
-          initialized: true,
-          initError: msg,
-          useCloud: true,
-        });
+        console.warn('[Supabase]', msg);
+        set({ initError: msg, useCloud: true });
       }
     },
 
