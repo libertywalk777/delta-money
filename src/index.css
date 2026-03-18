@@ -257,6 +257,28 @@ body {
   padding: 16px;
 }
 
+/* Модалка «Новая операция»: воздух между блоками */
+.modal-body--tx-operation {
+  padding: 18px 18px max(28px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+}
+
+.modal-body--tx-operation .tx-op-field {
+  margin-bottom: 0;
+}
+
+.tx-op-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.tx-op-stack .tx-op-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 14px;
+  align-items: start;
+}
+
 /* Progress Bar */
 .progress-track {
   height: 6px;

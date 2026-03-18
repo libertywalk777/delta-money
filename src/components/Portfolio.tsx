@@ -861,6 +861,11 @@ function AddTransactionModal({
     onClose();
   };
 
+  const txOpTransition = {
+    duration: 0.4,
+    ease: [0.16, 1, 0.3, 1] as const,
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -888,185 +893,258 @@ function AddTransactionModal({
                 Готово
               </button>
             </div>
-            
-            <div className="modal-body">
-              <p className="mb-3 rounded-xl bg-blue-50/90 px-3 py-2.5 text-xs leading-snug text-gray-700">
+
+            <div className="modal-body modal-body--tx-operation">
+              <p className="mb-4 rounded-xl bg-blue-50/90 px-3.5 py-3 text-xs leading-relaxed text-gray-700">
                 Покупка и продажа <strong>меняют портфель</strong> (вкладка «Акции»), запись
                 одновременно попадает в <strong>«Историю»</strong>. Пополнение увеличивает сумму
                 выбранного вклада.
               </p>
-              <div className="segment-control mb-4">
-                <button
-                  className={`segment-btn ${type === 'buy' ? 'active' : ''}`}
-                  onClick={() => setType('buy')}
-                >
-                  Покупка
-                </button>
-                <button
-                  className={`segment-btn ${type === 'sell' ? 'active' : ''}`}
-                  onClick={() => setType('sell')}
-                >
-                  Продажа
-                </button>
-                <button
-                  className={`segment-btn ${type === 'deposit' ? 'active' : ''}`}
-                  onClick={() => setType('deposit')}
-                >
-                  Пополнение
-                </button>
+
+              <div className="segment-control segment-control--smooth mb-5">
+                {(['buy', 'sell', 'deposit'] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    className={`segment-btn ${type === t ? 'segment-btn--on active' : 'segment-btn--off'}`}
+                    onClick={() => setType(t)}
+                  >
+                    {type === t && (
+                      <motion.div
+                        layoutId="tx-operation-segment-pill"
+                        className="absolute inset-[3px] rounded-[11px] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.07)]"
+                        transition={{
+                          type: 'spring',
+                          stiffness: 420,
+                          damping: 34,
+                          mass: 0.72,
+                        }}
+                      />
+                    )}
+                    <span className="relative z-[1]">
+                      {t === 'buy'
+                        ? 'Покупка'
+                        : t === 'sell'
+                          ? 'Продажа'
+                          : 'Пополнение'}
+                    </span>
+                  </button>
+                ))}
               </div>
 
-              {type === 'deposit' ? (
-                depositAssets.length > 0 ? (
-                  <div className="input-group">
-                    <label className="input-label">Вклад</label>
-                    <select
-                      className="select"
-                      value={assetId}
-                      onChange={(e) => {
-                        setAssetId(e.target.value);
-                        const asset = assets.find((a) => a.id === e.target.value);
-                        if (asset) {
-                          setAssetName(asset.name);
-                          setCurrency(asset.currency);
-                        }
-                      }}
-                    >
-                      <option value="">Выберите вклад</option>
-                      {depositAssets.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
-                  <p className="mb-3 text-sm text-amber-800">
-                    Нет вкладов. Добавьте вклад во вкладке «Депозиты», затем пополните его здесь.
-                  </p>
-                )
-              ) : (
-                <>
-                  {stockAssets.length > 0 && (
-                    <div className="input-group">
-                      <label className="input-label">
-                        {type === 'buy'
-                          ? 'Докупить к позиции'
-                          : 'Позиция'}
-                      </label>
-                      <select
-                        className="select"
-                        value={assetId}
-                        onChange={(e) => {
-                          setAssetId(e.target.value);
-                          const asset = assets.find((a) => a.id === e.target.value);
-                          if (asset) {
-                            setAssetName(asset.name);
-                            setCurrency(asset.currency);
-                          }
-                        }}
-                      >
-                        <option value="">
-                          {type === 'buy' ? 'Новый актив (другая монета)' : '— выберите —'}
-                        </option>
-                        {stockAssets.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.ticker || a.name}
-                          </option>
-                        ))}
-                      </select>
+              <AnimatePresence mode="wait">
+                {type === 'deposit' ? (
+                  <motion.div
+                    key="deposit"
+                    role="tabpanel"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={txOpTransition}
+                    className="tx-op-stack"
+                  >
+                    {depositAssets.length > 0 ? (
+                      <>
+                        <div className="input-group tx-op-field">
+                          <label className="input-label">Вклад</label>
+                          <select
+                            className="select"
+                            value={assetId}
+                            onChange={(e) => {
+                              setAssetId(e.target.value);
+                              const asset = assets.find(
+                                (a) => a.id === e.target.value
+                              );
+                              if (asset) {
+                                setAssetName(asset.name);
+                                setCurrency(asset.currency);
+                              }
+                            }}
+                          >
+                            <option value="">Выберите вклад</option>
+                            {depositAssets.map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="input-group tx-op-field">
+                          <label className="input-label">
+                            Сумма пополнения
+                          </label>
+                          <input
+                            type="number"
+                            className="input"
+                            placeholder="100000"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <p className="rounded-xl bg-amber-50 px-3.5 py-3 text-sm leading-relaxed text-amber-900">
+                        Нет вкладов. Добавьте вклад во вкладке «Депозиты», затем
+                        пополните его здесь.
+                      </p>
+                    )}
+                    <div className="tx-op-row2">
+                      <div className="input-group tx-op-field">
+                        <label className="input-label">Дата</label>
+                        <input
+                          type="date"
+                          className="input"
+                          value={date}
+                          onChange={(e) => setDate(e.target.value)}
+                        />
+                      </div>
+                      <div className="input-group tx-op-field">
+                        <label className="input-label">Валюта</label>
+                        <select
+                          className="select"
+                          value={currency}
+                          onChange={(e) => setCurrency(e.target.value)}
+                        >
+                          {CURRENCIES.map((c) => (
+                            <option key={c.value} value={c.value}>
+                              {c.value}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                  )}
-
-                  {(type === 'buy' || (type === 'sell' && !assetId)) && (
-                    <div className="input-group">
-                      <label className="input-label">
-                        {type === 'buy' ? 'Название / тикер' : 'Название актива'}
-                      </label>
+                    <div className="input-group tx-op-field">
+                      <label className="input-label">Комментарий</label>
                       <input
                         type="text"
                         className="input"
-                        placeholder="TON, AAPL, Bitcoin…"
-                        value={assetName}
-                        onChange={(e) => setAssetName(e.target.value)}
+                        placeholder="Опционально"
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
                       />
                     </div>
-                  )}
-                </>
-              )}
-
-              {type === 'deposit' ? (
-                <div className="input-group">
-                  <label className="input-label">Сумма пополнения</label>
-                  <input
-                    type="number"
-                    className="input"
-                    placeholder="100000"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                  />
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="input-group">
-                    <label className="input-label">Количество, шт</label>
-                    <input
-                      type="number"
-                      className="input"
-                      placeholder="10"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                    />
-                  </div>
-                  <div className="input-group">
-                    <label className="input-label">Цена за единицу</label>
-                    <input
-                      type="number"
-                      className="input"
-                      placeholder="150.00"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="input-group">
-                  <label className="input-label">Дата</label>
-                  <input
-                    type="date"
-                    className="input"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Валюта</label>
-                  <select
-                    className="select"
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={type === 'buy' ? 'buy' : 'sell'}
+                    role="tabpanel"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={txOpTransition}
+                    className="tx-op-stack"
                   >
-                    {CURRENCIES.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.value}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="input-group">
-                <label className="input-label">Комментарий</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="Опционально"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                />
-              </div>
+                    {stockAssets.length > 0 && (
+                      <div className="input-group tx-op-field">
+                        <label className="input-label">
+                          {type === 'buy'
+                            ? 'Докупить к позиции'
+                            : 'Позиция'}
+                        </label>
+                        <select
+                          className="select"
+                          value={assetId}
+                          onChange={(e) => {
+                            setAssetId(e.target.value);
+                            const asset = assets.find(
+                              (a) => a.id === e.target.value
+                            );
+                            if (asset) {
+                              setAssetName(asset.name);
+                              setCurrency(asset.currency);
+                            }
+                          }}
+                        >
+                          <option value="">
+                            {type === 'buy'
+                              ? 'Новый актив (другая монета)'
+                              : '— выберите —'}
+                          </option>
+                          {stockAssets.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.ticker || a.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    {(type === 'buy' ||
+                      (type === 'sell' && !assetId)) && (
+                      <div className="input-group tx-op-field">
+                        <label className="input-label">
+                          {type === 'buy'
+                            ? 'Название / тикер'
+                            : 'Название актива'}
+                        </label>
+                        <input
+                          type="text"
+                          className="input"
+                          placeholder="TON, AAPL, Bitcoin…"
+                          value={assetName}
+                          onChange={(e) => setAssetName(e.target.value)}
+                        />
+                      </div>
+                    )}
+                    <div className="tx-op-row2">
+                      <div className="input-group tx-op-field">
+                        <label className="input-label">Количество, шт</label>
+                        <input
+                          type="number"
+                          className="input"
+                          placeholder="10"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                        />
+                      </div>
+                      <div className="input-group tx-op-field">
+                        <label className="input-label">Цена за единицу</label>
+                        <input
+                          type="number"
+                          className="input"
+                          placeholder="150.00"
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="tx-op-row2">
+                      <div className="input-group tx-op-field">
+                        <label className="input-label">Дата</label>
+                        <input
+                          type="date"
+                          className="input"
+                          value={date}
+                          onChange={(e) => setDate(e.target.value)}
+                        />
+                      </div>
+                      <div className="input-group tx-op-field">
+                        <label className="input-label">Валюта</label>
+                        <select
+                          className="select"
+                          value={currency}
+                          onChange={(e) => setCurrency(e.target.value)}
+                        >
+                          {CURRENCIES.map((c) => (
+                            <option key={c.value} value={c.value}>
+                              {c.value}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="input-group tx-op-field">
+                      <label className="input-label">Комментарий</label>
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="Опционально"
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         </>
