@@ -80,7 +80,9 @@ export async function loadAll(supabase: SupabaseClient) {
 
   let settingsRow = s.data;
   if (!settingsRow) {
+    const uid = await getUserId(supabase);
     const ins = await supabase.from('user_settings').insert({
+      user_id: uid,
       display_currency: 'USD',
       currency_rates: { USD: 1, UZS: 12500, EUR: 0.92, RUB: 90 },
     });
@@ -108,9 +110,11 @@ export async function loadAll(supabase: SupabaseClient) {
 }
 
 export async function insertAsset(supabase: SupabaseClient, asset: Omit<Asset, 'id' | 'createdAt'>) {
+  const uid = await getUserId(supabase);
   const { data, error } = await supabase
     .from('assets')
     .insert({
+      user_id: uid,
       type: asset.type,
       name: asset.name,
       ticker: asset.ticker ?? null,
@@ -155,9 +159,11 @@ export async function insertTransaction(
   supabase: SupabaseClient,
   tx: Omit<Transaction, 'id'>
 ) {
+  const uid = await getUserId(supabase);
   const { data, error } = await supabase
     .from('transactions')
     .insert({
+      user_id: uid,
       asset_id: tx.assetId ?? null,
       asset_name: tx.assetName,
       type: tx.type,
@@ -179,9 +185,11 @@ export async function deleteTransactionDb(supabase: SupabaseClient, id: string) 
 }
 
 export async function insertGoal(supabase: SupabaseClient, goal: Omit<Goal, 'id' | 'createdAt'>) {
+  const uid = await getUserId(supabase);
   const { data, error } = await supabase
     .from('goals')
     .insert({
+      user_id: uid,
       name: goal.name,
       target_amount: goal.targetAmount,
       current_amount: goal.currentAmount,

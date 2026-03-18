@@ -10,6 +10,7 @@
 
 1. Весь файл `supabase/migrations/001_init.sql`
 2. Весь файл `supabase/migrations/002_telegram_auth_map.sql`
+3. `supabase/migrations/004_inserts_user_id_drop_triggers.sql` — иначе INSERT в БД мог не проходить
 
 ## 3. Anonymous выключить
 

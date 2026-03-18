@@ -112,6 +112,13 @@ body {
   transform: scale(0.98);
 }
 
+/* Сильно закруглённые основные кнопки (+ актив, цель) */
+.btn-pill {
+  border-radius: 9999px;
+  padding-left: 22px;
+  padding-right: 22px;
+}
+
 .btn-secondary {
   background: var(--color-gray-100);
   color: var(--color-gray-900);

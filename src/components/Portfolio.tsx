@@ -84,7 +84,7 @@ export function Portfolio() {
               <div className="empty-title">Нет акций</div>
               <div className="empty-text">Добавьте первую акцию или ETF</div>
               <button 
-                className="btn btn-primary mt-4"
+                className="btn btn-primary btn-pill mt-4"
                 onClick={() => setShowAddAsset(true)}
               >
                 <Plus size={18} />
@@ -160,7 +160,7 @@ export function Portfolio() {
               <div className="empty-title">Нет депозитов</div>
               <div className="empty-text">Добавьте первый вклад</div>
               <button 
-                className="btn btn-primary mt-4"
+                className="btn btn-primary btn-pill mt-4"
                 onClick={() => setShowAddAsset(true)}
               >
                 <Plus size={18} />

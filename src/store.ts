@@ -1,8 +1,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import WebApp from '@twa-dev/sdk';
 import { Asset, Transaction, Goal, CurrencyRates, Currency } from './types';
 import { isSupabaseConfigured, getSupabase } from './lib/supabase';
 import * as db from './lib/db';
+
+function showSaveError(title: string, e: unknown) {
+  const msg =
+    e && typeof e === 'object' && 'message' in e
+      ? String((e as { message: string }).message)
+      : String(e);
+  console.error(title, e);
+  try {
+    WebApp.showAlert(`${title}\n${msg}`);
+  } catch {
+    window.alert(`${title}: ${msg}`);
+  }
+}
 
 interface AppState {
   initialized: boolean;
@@ -187,82 +201,90 @@ function createCloudStore() {
 
     addAsset: async (asset) => {
       try {
+        await supabase.auth.refreshSession().catch(() => {});
         const row = await db.insertAsset(supabase, asset);
         set((s) => ({ assets: [row, ...s.assets] }));
       } catch (e) {
-        console.error(e);
+        showSaveError('Актив не сохранился', e);
       }
     },
 
     updateAsset: async (id, updates) => {
       try {
+        await supabase.auth.refreshSession().catch(() => {});
         await db.updateAssetDb(supabase, id, updates);
         set((s) => ({
           assets: s.assets.map((a) => (a.id === id ? { ...a, ...updates } : a)),
         }));
       } catch (e) {
-        console.error(e);
+        showSaveError('Актив не обновлён', e);
       }
     },
 
     deleteAsset: async (id) => {
       try {
+        await supabase.auth.refreshSession().catch(() => {});
         await db.deleteAssetDb(supabase, id);
         set((s) => ({
           assets: s.assets.filter((a) => a.id !== id),
           transactions: s.transactions.filter((t) => t.assetId !== id),
         }));
       } catch (e) {
-        console.error(e);
+        showSaveError('Не удалось удалить актив', e);
       }
     },
 
     addTransaction: async (transaction) => {
       try {
+        await supabase.auth.refreshSession().catch(() => {});
         const row = await db.insertTransaction(supabase, transaction);
         set((s) => ({ transactions: [row, ...s.transactions] }));
       } catch (e) {
-        console.error(e);
+        showSaveError('Операция не сохранена', e);
       }
     },
 
     deleteTransaction: async (id) => {
       try {
+        await supabase.auth.refreshSession().catch(() => {});
         await db.deleteTransactionDb(supabase, id);
         set((s) => ({
           transactions: s.transactions.filter((t) => t.id !== id),
         }));
       } catch (e) {
-        console.error(e);
+        showSaveError('Операция не удалена', e);
       }
     },
 
     addGoal: async (goal) => {
       try {
+        await supabase.auth.refreshSession().catch(() => {});
         const row = await db.insertGoal(supabase, goal);
         set((s) => ({ goals: [row, ...s.goals] }));
       } catch (e) {
-        console.error(e);
+        showSaveError('Цель не сохранена', e);
       }
     },
 
     updateGoal: async (id, updates) => {
       try {
+        await supabase.auth.refreshSession().catch(() => {});
         await db.updateGoalDb(supabase, id, updates);
         set((s) => ({
           goals: s.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
         }));
       } catch (e) {
-        console.error(e);
+        showSaveError('Цель не обновлена', e);
       }
     },
 
     deleteGoal: async (id) => {
       try {
+        await supabase.auth.refreshSession().catch(() => {});
         await db.deleteGoalDb(supabase, id);
         set((s) => ({ goals: s.goals.filter((g) => g.id !== id) }));
       } catch (e) {
-        console.error(e);
+        showSaveError('Цель не удалена', e);
       }
     },
 
@@ -271,6 +293,7 @@ function createCloudStore() {
       if (!g) return;
       const next = g.currentAmount + amount;
       try {
+        await supabase.auth.refreshSession().catch(() => {});
         await db.updateGoalDb(supabase, id, { currentAmount: next });
         set((s) => ({
           goals: s.goals.map((x) =>
@@ -278,7 +301,7 @@ function createCloudStore() {
           ),
         }));
       } catch (e) {
-        console.error(e);
+        showSaveError('Взнос не сохранён', e);
       }
     },
 
@@ -287,7 +310,7 @@ function createCloudStore() {
         await db.saveDisplayCurrency(supabase, currency);
         set({ displayCurrency: currency });
       } catch (e) {
-        console.error(e);
+        showSaveError('Валюта не сохранена', e);
       }
     },
 

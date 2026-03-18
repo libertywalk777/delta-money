@@ -44,8 +44,9 @@ export function Goals() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-gray-900">Цели</h2>
         <button
+          type="button"
           onClick={() => setShowAddGoal(true)}
-          className="flex items-center gap-1 text-primary text-sm font-medium"
+          className="btn btn-primary btn-pill !py-2 !px-4 !text-sm gap-1"
         >
           <Plus size={18} />
           Добавить
@@ -62,7 +63,8 @@ export function Goals() {
             Создайте цель накопления и отслеживайте прогресс
           </div>
           <button 
-            className="btn btn-primary mt-4"
+            type="button"
+            className="btn btn-primary btn-pill mt-4"
             onClick={() => setShowAddGoal(true)}
           >
             <Plus size={18} />
