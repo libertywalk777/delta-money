@@ -259,7 +259,7 @@ export function Portfolio() {
               <div className="empty-title">Нет операций</div>
               <div className="empty-text">История транзакций пуста</div>
               <button 
-                className="btn btn-primary mt-4"
+                className="btn btn-primary btn-pill mt-4"
                 onClick={() => setShowAddTransaction(true)}
               >
                 <Plus size={18} />
@@ -320,7 +320,7 @@ export function Portfolio() {
           
           {sortedTransactions.length > 0 && (
             <button 
-              className="btn btn-secondary w-full mt-4"
+              className="btn btn-secondary btn-pill w-full mt-4"
               onClick={() => setShowAddTransaction(true)}
             >
               <Plus size={18} />
