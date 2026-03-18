@@ -726,9 +726,9 @@ function EditAssetModal({
             <button
               type="button"
               onClick={onAddOperation}
-              className="btn btn-secondary btn-pill mb-3 w-full gap-2 border border-gray-200/80 bg-white text-gray-800 shadow-sm"
+              className="btn btn-primary btn-pill mb-3 w-full gap-2"
             >
-              <Plus size={18} className="text-primary" />
+              <Plus size={18} />
               Добавить операцию
             </button>
           )}
