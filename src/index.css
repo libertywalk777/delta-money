@@ -72,6 +72,13 @@ body {
   gap: 2px;
 }
 
+/* Портфель: более мягкие углы + плавные цвета под скользящий pill */
+.segment-control--smooth {
+  border-radius: 14px;
+  padding: 4px;
+  gap: 3px;
+}
+
 .segment-btn {
   flex: 1;
   padding: 8px 12px;
@@ -79,14 +86,39 @@ body {
   font-size: 13px;
   font-weight: 500;
   color: var(--color-gray-600);
-  transition: all 0.2s;
+  transition: color 0.35s cubic-bezier(0.25, 0.1, 0.25, 1),
+    font-weight 0.25s ease;
   text-align: center;
+}
+
+.segment-control--smooth .segment-btn {
+  position: relative;
+  border-radius: 11px;
+  padding: 9px 10px;
+  z-index: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.segment-control--smooth .segment-btn.segment-btn--on {
+  color: var(--color-gray-900);
+  font-weight: 600;
+}
+
+.segment-control--smooth .segment-btn.segment-btn--off {
+  color: var(--color-gray-500);
+  font-weight: 500;
 }
 
 .segment-btn.active {
   background: white;
   color: var(--color-gray-900);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.segment-control--smooth .segment-btn.active {
+  background: transparent;
+  box-shadow: none;
 }
 
 /* Button */

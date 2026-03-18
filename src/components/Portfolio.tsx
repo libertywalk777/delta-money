@@ -46,35 +46,54 @@ export function Portfolio() {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
+  const tabTransition = {
+    duration: 0.42,
+    ease: [0.16, 1, 0.3, 1] as const,
+  };
+
   return (
     <div className="pb-24 px-4 pt-4">
-      {/* Segment Control */}
-      <div className="segment-control mb-4">
-        <button
-          className={`segment-btn ${tab === 'stocks' ? 'active' : ''}`}
-          onClick={() => setTab('stocks')}
-        >
-          Акции ({stocks.length})
-        </button>
-        <button
-          className={`segment-btn ${tab === 'deposits' ? 'active' : ''}`}
-          onClick={() => setTab('deposits')}
-        >
-          Депозиты ({deposits.length})
-        </button>
-        <button
-          className={`segment-btn ${tab === 'history' ? 'active' : ''}`}
-          onClick={() => setTab('history')}
-        >
-          История
-        </button>
+      {/* Segment Control — скользящий pill + скругление */}
+      <div className="segment-control segment-control--smooth mb-4">
+        {(
+          [
+            { id: 'stocks' as const, label: `Акции (${stocks.length})` },
+            { id: 'deposits' as const, label: `Депозиты (${deposits.length})` },
+            { id: 'history' as const, label: 'История' },
+          ] as const
+        ).map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            className={`segment-btn ${tab === id ? 'segment-btn--on active' : 'segment-btn--off'}`}
+            onClick={() => setTab(id)}
+          >
+            {tab === id && (
+              <motion.div
+                layoutId="portfolio-segment-pill"
+                className="absolute inset-[3px] rounded-[11px] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.07)]"
+                transition={{
+                  type: 'spring',
+                  stiffness: 420,
+                  damping: 34,
+                  mass: 0.72,
+                }}
+              />
+            )}
+            <span className="relative z-[1]">{label}</span>
+          </button>
+        ))}
       </div>
 
-      {/* Stocks Tab */}
-      {tab === 'stocks' && (
+      <AnimatePresence mode="wait">
+        {tab === 'stocks' && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          key="stocks"
+          role="tabpanel"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={tabTransition}
         >
           {stocks.length === 0 ? (
             <div className="empty-state">
@@ -144,13 +163,16 @@ export function Portfolio() {
             </div>
           )}
         </motion.div>
-      )}
+        )}
 
-      {/* Deposits Tab */}
       {tab === 'deposits' && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          key="deposits"
+          role="tabpanel"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={tabTransition}
         >
           {deposits.length === 0 ? (
             <div className="empty-state">
@@ -218,13 +240,16 @@ export function Portfolio() {
             </div>
           )}
         </motion.div>
-      )}
+        )}
 
-      {/* History Tab */}
       {tab === 'history' && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          key="history"
+          role="tabpanel"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={tabTransition}
         >
           {sortedTransactions.length === 0 ? (
             <div className="empty-state">
@@ -303,7 +328,8 @@ export function Portfolio() {
             </button>
           )}
         </motion.div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Add Asset Modal */}
       <AddAssetModal
