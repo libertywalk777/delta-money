@@ -261,7 +261,7 @@ export function Settings() {
         </p>
       </div>
 
-      {/* Currency Picker Modal */}
+      {/* Выбор валюты — попап над нижним навбаром */}
       <AnimatePresence>
         {showCurrencyPicker && (
           <>
@@ -269,15 +269,15 @@ export function Settings() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 z-40"
+              className="fixed inset-0 bg-black/45 z-[100]"
               onClick={() => setShowCurrencyPicker(false)}
             />
             <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[70vh] overflow-hidden"
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+              className="fixed left-4 right-4 bottom-[7.5rem] max-w-md mx-auto bg-white rounded-2xl shadow-2xl z-[110] max-h-[min(58vh,420px)] overflow-hidden ring-1 ring-black/5"
             >
               <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Выберите валюту</h2>
@@ -288,7 +288,7 @@ export function Settings() {
                   Готово
                 </button>
               </div>
-              <div className="overflow-y-auto max-h-[60vh]">
+              <div className="overflow-y-auto max-h-[min(48vh,340px)]">
                 {CURRENCIES.map(currency => (
                   <button
                     key={currency.value}
@@ -318,7 +318,7 @@ export function Settings() {
         )}
       </AnimatePresence>
 
-      {/* Rates Editor Modal */}
+      {/* Курсы — тот же стиль над навбаром */}
       <AnimatePresence>
         {showRatesEditor && (
           <>
@@ -326,17 +326,17 @@ export function Settings() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 z-40"
+              className="fixed inset-0 bg-black/45 z-[100]"
               onClick={() => setShowRatesEditor(false)}
             />
             <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50"
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+              className="fixed left-4 right-4 bottom-[7.5rem] max-w-md mx-auto bg-white rounded-2xl shadow-2xl z-[110] max-h-[min(70vh,520px)] overflow-hidden flex flex-col ring-1 ring-black/5"
             >
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-lg font-semibold">Курсы валют</h2>
                 <button
                   onClick={() => setShowRatesEditor(false)}
@@ -345,7 +345,7 @@ export function Settings() {
                   Готово
                 </button>
               </div>
-              <div className="p-4 space-y-4">
+              <div className="p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
                 <p className="text-sm text-gray-500">
                   Укажите курс валют относительно 1 USD
                 </p>
@@ -374,7 +374,6 @@ export function Settings() {
                   </div>
                 ))}
               </div>
-              <div className="h-8" />
             </motion.div>
           </>
         )}

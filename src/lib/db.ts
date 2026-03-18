@@ -4,11 +4,24 @@ import { ensureSupabaseMatchesTelegramUser } from './telegramAuth';
 
 const ZERO_UUID = '00000000-0000-0000-0000-000000000000';
 
+/** Сессия в WebView иногда пропадает — обновляем JWT или снова входим через Telegram. */
 async function getUserId(supabase: SupabaseClient) {
-  const {
+  let {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user?.id) throw new Error('Нет сессии');
+
+  if (!user?.id) {
+    await supabase.auth.refreshSession().catch(() => {});
+    ({ data: { user } } = await supabase.auth.getUser());
+  }
+  if (!user?.id) {
+    await supabase.auth.signOut({ scope: 'local' });
+    await ensureSupabaseMatchesTelegramUser(supabase);
+    ({ data: { user } } = await supabase.auth.getUser());
+  }
+  if (!user?.id) {
+    throw new Error('Войдите снова: закройте мини-апп и откройте из бота');
+  }
   return user.id;
 }
 
